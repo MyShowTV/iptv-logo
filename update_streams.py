@@ -1,68 +1,29 @@
-import os
+import requests
 import re
-from playwright.sync_api import sync_playwright
+import os
 
-# 频道配置
-DYNAMIC_CHANNELS = {
-    "成都新闻综合": "https://www.cditv.cn/show/4845-563.html",
-    "成都经济资讯": "https://www.cditv.cn/show/4845-562.html",
-    "成都都市生活": "https://www.cditv.cn/show/4845-561.html",
-    "成都影视文艺": "https://www.cditv.cn/show/4845-560.html",
-    "成都公共": "https://www.cditv.cn/show/4845-559.html",
-    "成都少儿": "https://www.cditv.cn/show/4845-558.html",
-    "成都高新台": "https://www.cditv.cn/show/4845-591.html"
+# 配置你想更新的频道和对应的“钥匙”(API地址)
+# 这样即使 M3U 里的地址变了，脚本依然知道去哪里换票
+CHANNELS_MAP = {
+    "成都新闻综合": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv1high%2FCDTV1High.flv%2Fplaylist.m3u8",
+    "成都经济资讯": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv2high%2FCDTV2High.flv%2Fplaylist.m3u8",
+    "成都都市生活": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv3high%2FCDTV3High.flv%2Fplaylist.m3u8",
+    "成都影视文艺": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv4high%2FCDTV4High.flv%2Fplaylist.m3u8",
+    "成都公共": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv5high%2FCDTV5High.flv%2Fplaylist.m3u8",
+    "成都少儿": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv6high%2FCDTV6High.flv%2Fplaylist.m3u8"
 }
 
-def get_dynamic_url(name, page_url):
-    print(f"🚀 正在抓取: {name}...")
-    found_url = None
-    
-    with sync_playwright() as p:
-        # 启动浏览器
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        page = context.new_page()
-
-        # 定义监听逻辑
-        def handle_request(request):
-            nonlocal found_url
-            url = request.url
-            # 只要看到带 wsSecret 的 m3u8，立刻锁定
-            if ".m3u8?" in url and "wsSecret=" in url:
-                found_url = url
-            # 或者看到发号器接口
-            elif "getLiveUrl" in url and not found_url:
-                found_url = url
-
-        page.on("request", handle_request)
-        
-        try:
-            # 修改 1：将等待条件改为 'commit' (只要服务器响应了就开始抓)
-            # 修改 2：将超时增加到 60 秒，应对跨境网络延迟
-            page.goto(page_url, wait_until="commit", timeout=60000)
-            
-            # 修改 3：强制等待 15 秒给 JavaScript 运行时间，通常这时候授权地址就会出现了
-            page.wait_for_timeout(15000) 
-        except Exception as e:
-            print(f"⚠️ [{name}] 访问提醒: {e}")
-        
-        browser.close()
-    
-    # 二次处理：如果是发号器地址，转为真实地址
-    if found_url and "getLiveUrl" in found_url and "wsSecret" not in found_url:
-        import requests
-        try:
-            res = requests.get(found_url, timeout=10)
-            match = re.search(r'https?://[^\s\'"]+\.m3u8\?[^\s\'"]+', res.text)
-            if match: found_url = match.group(0)
-        except: pass
-
-    if found_url:
-        print(f"✅ [{name}] 抓取成功: {found_url[:50]}...")
-        return found_url
-    else:
-        print(f"❌ [{name}] 未能截获授权地址，保持原样")
-        return page_url
+def get_new_ticket(api_url):
+    headers = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.cditv.cn/'}
+    try:
+        res = requests.get(api_url, headers=headers, timeout=10)
+        # 提取带 wsSecret 的地址
+        match = re.search(r'https?://[^\s\'"]+\.m3u8\?[^\s\'"]+', res.text)
+        if match:
+            return match.group(0).replace('\\/', '/')
+    except:
+        return None
+    return None
 
 def main():
     file_path = "TWTV.m3u"
@@ -76,11 +37,19 @@ def main():
     while i < len(lines):
         line = lines[i]
         new_lines.append(line)
-        for name, url in DYNAMIC_CHANNELS.items():
+        
+        # 寻找频道名
+        for name, api_url in CHANNELS_MAP.items():
             if f'tvg-name="{name}"' in line or line.strip().endswith(f',{name}'):
-                real_url = get_dynamic_url(name, url)
-                new_lines.append(real_url + "\n")
-                i += 1
+                print(f"🔄 正在为 [{name}] 领新门票...")
+                new_ticket = get_new_ticket(api_url)
+                if new_ticket:
+                    new_lines.append(new_ticket + "\n")
+                    print("✅ 领票成功")
+                else:
+                    if i + 1 < len(lines): new_lines.append(lines[i+1])
+                    print("❌ 领票失败，保留旧地址")
+                i += 1 # 跳过旧地址行
                 break
         i += 1
 
