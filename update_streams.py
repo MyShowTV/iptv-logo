@@ -14,48 +14,55 @@ DYNAMIC_CHANNELS = {
 }
 
 def get_dynamic_url(name, page_url):
-    print(f"🚀 正在通过 Playwright 抓取: {name}...")
-    final_url = page_url
+    print(f"🚀 正在抓取: {name}...")
+    found_url = None
     
     with sync_playwright() as p:
-        # 启动 Chromium (无头模式)
+        # 启动浏览器
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
         page = context.new_page()
 
-        # 核心逻辑：监听所有网络请求
+        # 定义监听逻辑
         def handle_request(request):
-            nonlocal final_url
+            nonlocal found_url
             url = request.url
-            # 优先寻找带授权参数的最终 m3u8
+            # 只要看到带 wsSecret 的 m3u8，立刻锁定
             if ".m3u8?" in url and "wsSecret=" in url:
-                final_url = url
-            # 备选：寻找发号器接口
-            elif "getLiveUrl" in url and final_url == page_url:
-                final_url = url
+                found_url = url
+            # 或者看到发号器接口
+            elif "getLiveUrl" in url and not found_url:
+                found_url = url
 
         page.on("request", handle_request)
         
         try:
-            # 访问网页并等待网络空闲
-            page.goto(page_url, wait_until="networkidle", timeout=30000)
-            # 模拟点击播放（有时需要触发）
-            page.wait_for_timeout(5000) 
+            # 修改 1：将等待条件改为 'commit' (只要服务器响应了就开始抓)
+            # 修改 2：将超时增加到 60 秒，应对跨境网络延迟
+            page.goto(page_url, wait_until="commit", timeout=60000)
+            
+            # 修改 3：强制等待 15 秒给 JavaScript 运行时间，通常这时候授权地址就会出现了
+            page.wait_for_timeout(15000) 
         except Exception as e:
-            print(f"⚠️ [{name}] 访问超时或出错: {e}")
+            print(f"⚠️ [{name}] 访问提醒: {e}")
         
         browser.close()
     
-    # 如果抓到的是发号器 API，我们需要请求它获取最终地址
-    if "getLiveUrl" in final_url and "wsSecret" not in final_url:
+    # 二次处理：如果是发号器地址，转为真实地址
+    if found_url and "getLiveUrl" in found_url and "wsSecret" not in found_url:
         import requests
         try:
-            res = requests.get(final_url, timeout=10)
+            res = requests.get(found_url, timeout=10)
             match = re.search(r'https?://[^\s\'"]+\.m3u8\?[^\s\'"]+', res.text)
-            if match: final_url = match.group(0)
+            if match: found_url = match.group(0)
         except: pass
 
-    return final_url
+    if found_url:
+        print(f"✅ [{name}] 抓取成功: {found_url[:50]}...")
+        return found_url
+    else:
+        print(f"❌ [{name}] 未能截获授权地址，保持原样")
+        return page_url
 
 def main():
     file_path = "TWTV.m3u"
@@ -74,7 +81,6 @@ def main():
                 real_url = get_dynamic_url(name, url)
                 new_lines.append(real_url + "\n")
                 i += 1
-                print(f"✅ {name} 更新完毕")
                 break
         i += 1
 
