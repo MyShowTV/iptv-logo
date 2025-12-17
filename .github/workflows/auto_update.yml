@@ -2,12 +2,15 @@ name: Auto Sync TWTV
 
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    - cron: '0 * * * *'  # 每小时自动运行一次
+  workflow_dispatch:      # 允许手动点击运行
 
 jobs:
-  build:
+  update-list:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run script
+      - name: Run update script
         run: python update_streams.py
 
       - name: Commit and Push
@@ -28,5 +31,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add TWTV.m3u
-          git commit -m "Update Chengdu TV tokens" || echo "No changes to commit"
+          git commit -m "Update Chengdu TV Auth Tokens" || echo "No changes to commit"
           git push
