@@ -1,9 +1,10 @@
 import requests
-import re
 import os
+import urllib.parse
+import re
 
-# 频道配置
-CHANNELS_MAP = {
+# 成都台发号器接口（你提供的）
+CHANNELS = {
     "成都新闻综合": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv1high%2FCDTV1High.flv%2Fplaylist.m3u8",
     "成都经济资讯": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv2high%2FCDTV2High.flv%2Fplaylist.m3u8",
     "成都都市生活": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv3high%2FCDTV3High.flv%2Fplaylist.m3u8",
@@ -12,70 +13,70 @@ CHANNELS_MAP = {
     "成都少儿": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv6high%2FCDTV6High.flv%2Fplaylist.m3u8"
 }
 
-def get_new_ticket(name, api_url):
-    # 模拟真实浏览器的请求头
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': 'https://www.cditv.cn/',
-        'Origin': 'https://www.cditv.cn',
-        'Accept': '*/*',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-    }
+HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Referer": "https://cditv.cn/"
+}
+
+def fetch_real_url(api_url):
+    """访问发号器接口，提取真实 m3u8"""
     try:
-        # 使用 verify=False 避免某些 SSL 证书问题
-        res = requests.get(api_url, headers=headers, timeout=15, verify=True)
-        
-        # 打印调试信息（你在 Actions 日志里能看到回传了什么）
-        print(f"DEBUG [{name}] 状态码: {res.status_code}")
-        
-        # 提取带 wsSecret 的地址
-        # 兼容处理回传内容中可能的反斜杠转义
-        text = res.text.replace('\\/', '/')
-        match = re.search(r'https?://[^\s\'"]+\.m3u8\?[^\s\'"]+', text)
-        
+        res = requests.get(api_url, headers=HEADERS, timeout=10)
+        text = res.text.replace("\\", "")
+
+        # 提取带 wsSecret 的 m3u8
+        match = re.search(r"https?://[^\s\"']+\.m3u8[^\s\"']*", text)
         if match:
             return match.group(0)
-        else:
-            print(f"DEBUG [{name}] 内容截断: {res.text[:100]}") # 没匹配到时看下回传的前100个字
-            return None
+        return None
     except Exception as e:
-        print(f"❌ 请求异常: {e}")
+        print("请求失败:", e)
         return None
 
+
 def main():
-    file_path = "TWTV.m3u"
-    if not os.path.exists(file_path): 
-        print(f"找不到文件: {file_path}")
+    m3u_file = "TWTV.m3u"
+
+    if not os.path.exists(m3u_file):
+        print("找不到 TWTV.m3u 文件")
         return
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(m3u_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     new_lines = []
     i = 0
-    while i < len(lines):
+    total = len(lines)
+    updated = 0
+
+    while i < total:
         line = lines[i]
         new_lines.append(line)
-        
-        updated = False
-        for name, api_url in CHANNELS_MAP.items():
-            if f'tvg-name="{name}"' in line or line.strip().endswith(f',{name}'):
-                print(f"🔄 正在为 [{name}] 换取最新授权地址...")
-                new_url = get_new_ticket(name, api_url)
-                if new_url:
-                    new_lines.append(new_url + "\n")
-                    print(f"✅ 成功: {new_url[:60]}...")
+
+        for name, api_url in CHANNELS.items():
+            if f'tvg-name="{name}"' in line or line.strip().endswith(f",{name}"):
+                print(f"正在更新：{name}")
+
+                real_url = fetch_real_url(api_url)
+
+                if real_url:
+                    print(f"成功：{real_url}")
+                    new_lines.append(real_url + "\n")
+                    updated += 1
                 else:
-                    if i + 1 < len(lines):
-                        new_lines.append(lines[i+1])
-                    print(f"❌ 失败: 未能在接口返回中找到有效流地址")
+                    print("失败，保留旧地址")
+                    new_lines.append(lines[i+1])
+
                 i += 1
-                updated = True
                 break
+
         i += 1
 
-    with open(file_path, "w", encoding="utf-8") as f:
+    with open(m3u_file, "w", encoding="utf-8") as f:
         f.writelines(new_lines)
+
+    print(f"\n更新完成，共更新 {updated} 个频道")
+
 
 if __name__ == "__main__":
     main()
