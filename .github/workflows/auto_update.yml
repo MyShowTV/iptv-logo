@@ -2,15 +2,12 @@ name: Auto Sync TWTV
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 每小时运行一次
-  workflow_dispatch:      # 支持手动运行
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,11 +18,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          pip install requests playwright
-          # 安装 Playwright 所需的浏览器内核和系统依赖
-          playwright install chromium
-          playwright install-deps chromium
+        run: pip install requests
 
       - name: Run script
         run: python update_streams.py
@@ -35,5 +28,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add TWTV.m3u
-          git commit -m "Update Chengdu TV channels with Playwright" || echo "No changes to commit"
+          git commit -m "Update Chengdu TV tokens" || echo "No changes to commit"
           git push
