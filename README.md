@@ -22,7 +22,8 @@
     <img src="https://img.shields.io/github/forks/alantang1977/iptv_api" />
   </a>
 </p>
-# 贡献指南
+
+## 贡献指南
 1. Fork 本仓库至个人账号；
 2. 按「频道名称.png」命名规则，上传缺失台标至 tv 目录；
 3. 提交 PR 并注明频道归属分类，审核通过后合并。
