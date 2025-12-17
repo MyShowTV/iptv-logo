@@ -1,6 +1,5 @@
 import requests
 import os
-import urllib.parse
 import re
 
 # 成都台发号器接口（你提供的）
@@ -18,17 +17,28 @@ HEADERS = {
     "Referer": "https://cditv.cn/"
 }
 
+
 def fetch_real_url(api_url):
-    """访问发号器接口，提取真实 m3u8"""
+    """访问发号器接口，提取真实 m3u8 地址"""
     try:
         res = requests.get(api_url, headers=HEADERS, timeout=10)
-        text = res.text.replace("\\", "")
 
-        # 提取带 wsSecret 的 m3u8
+        # 优先尝试 JSON 格式
+        try:
+            data = res.json()
+            if "data" in data and isinstance(data["data"], str) and data["data"].startswith("http"):
+                return data["data"]
+        except:
+            pass
+
+        # 如果不是 JSON，则尝试正则兜底
+        text = res.text.replace("\\", "")
         match = re.search(r"https?://[^\s\"']+\.m3u8[^\s\"']*", text)
         if match:
             return match.group(0)
+
         return None
+
     except Exception as e:
         print("请求失败:", e)
         return None
@@ -38,33 +48,34 @@ def main():
     m3u_file = "TWTV.m3u"
 
     if not os.path.exists(m3u_file):
-        print("找不到 TWTV.m3u 文件")
+        print("错误：找不到 TWTV.m3u 文件")
         return
 
     with open(m3u_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     new_lines = []
+    updated = 0
     i = 0
     total = len(lines)
-    updated = 0
 
     while i < total:
         line = lines[i]
         new_lines.append(line)
 
+        # 检查是否匹配频道
         for name, api_url in CHANNELS.items():
             if f'tvg-name="{name}"' in line or line.strip().endswith(f",{name}"):
-                print(f"正在更新：{name}")
 
+                print(f"\n正在更新：{name}")
                 real_url = fetch_real_url(api_url)
 
                 if real_url:
-                    print(f"成功：{real_url}")
+                    print(f"✅ 成功：{real_url}")
                     new_lines.append(real_url + "\n")
                     updated += 1
                 else:
-                    print("失败，保留旧地址")
+                    print("❌ 失败，保留旧地址")
                     new_lines.append(lines[i+1])
 
                 i += 1
@@ -72,10 +83,11 @@ def main():
 
         i += 1
 
+    # 写回文件
     with open(m3u_file, "w", encoding="utf-8") as f:
         f.writelines(new_lines)
 
-    print(f"\n更新完成，共更新 {updated} 个频道")
+    print(f"\n✅ 更新完成，共更新 {updated} 个频道")
 
 
 if __name__ == "__main__":
