@@ -7,7 +7,14 @@ import os
 # 注意：名稱必須和你 TWTV.m3u 裡的頻道名稱（逗號後面的字）一模一樣。
 # ==========================================================
 DYNAMIC_CHANNELS = {
-    "成都综合": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv1high%2FCDTV1High.flv%2Fplaylist.m3u8",
+    "成都新闻综合": "https://cstvweb.cdmp.candocloud.cn/live/getLiveUrl?url=https%3A%2F%2Fcdn1.cditv.cn%2Fcdtv1high%2FCDTV1High.flv%2Fplaylist.m3u8",
+    "成都经济资讯": "https://www.ofiii.com/channel/watch/litv-longturn03", 
+    "成都都市生活": "https://www.ofiii.com/channel/watch/litv-longturn03",
+    "成都经济资讯": "https://www.ofiii.com/channel/watch/litv-longturn03",
+    "成都影视文艺": "https://www.ofiii.com/channel/watch/litv-longturn03",
+    "成都公共": "https://www.ofiii.com/channel/watch/litv-longturn03",
+    "成都少儿": "https://www.ofiii.com/channel/watch/litv-longturn03",
+    "成都高新台": "https://www.ofiii.com/channel/watch/litv-longturn03",
     "龙华电影": "https://www.ofiii.com/channel/watch/litv-longturn03",
 }
 
