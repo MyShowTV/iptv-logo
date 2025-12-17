@@ -3,8 +3,7 @@ import re
 import os
 
 # ==========================================================
-# 在這裡添加你想自動抓取的頻道。
-# 注意：名稱必須和你 TWTV.m3u 裡的頻道名稱（逗號後面的字）一模一樣。
+# 频道清单
 # ==========================================================
 DYNAMIC_CHANNELS = {
     "成都新闻综合": "https://www.cditv.cn/show/4845-563.html",
@@ -17,17 +16,30 @@ DYNAMIC_CHANNELS = {
     "龙华电影": "https://www.ofiii.com/channel/watch/litv-longturn03",
 }
 
-def get_real_url(name, api_url):
+def get_real_url(name, page_url):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
-        res = requests.get(api_url, headers=headers, timeout=15)
-        # 尋找內容中的 m3u8 地址
+        # 1. 访问频道网页
+        res = requests.get(page_url, headers=headers, timeout=10)
+        # 2. 寻找 getLiveUrl 接口
+        api_match = re.search(r'https?://[^\s\'"]+getLiveUrl\?url=[^\s\'"]+', res.text)
+        
+        if api_match:
+            api_url = api_match.group(0).replace('&amp;', '&')
+            # 3. 访问接口获取最终带 Token 的 m3u8
+            api_res = requests.get(api_url, headers=headers, timeout=10)
+            final_url_match = re.search(r'https?://[^\s\'"]+\.m3u8[^\s\'"]*', api_res.text)
+            if final_url_match:
+                return final_url_match.group(0)
+        
+        # 如果不是成都台这种接口，尝试通用匹配（针对龙华电影等）
         links = re.findall(r'https?://[^\s\'"]+\.m3u8[^\s\'"]*', res.text)
         for link in links:
             if "getLiveUrl" not in link: return link
-        return api_url
+            
+        return page_url # 实在抓不到就返回原地址
     except:
-        return api_url
+        return page_url
 
 def main():
     file_path = "TWTV.m3u"
@@ -44,15 +56,13 @@ def main():
         line = lines[i]
         new_lines.append(line)
         
-        # 判斷這一行是不是我們要更新的頻道
         found = False
-        for name, api_url in DYNAMIC_CHANNELS.items():
-            # 匹配 tvg-name="頻道名" 或以 ,頻道名 結尾
+        for name, page_url in DYNAMIC_CHANNELS.items():
             if f'tvg-name="{name}"' in line or line.strip().endswith(f',{name}'):
                 print(f"正在更新: {name}")
-                real_url = get_real_url(name, api_url)
+                real_url = get_real_url(name, page_url)
                 new_lines.append(real_url + "\n")
-                i += 1 # 跳過舊檔案中的舊網址
+                i += 1 
                 found = True
                 break
         i += 1
