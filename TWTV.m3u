@@ -1001,17 +1001,17 @@ http://175.153.237.76:9901/tsfile/live/1045_1.m3u8?key=txiptv&playlive=0&authid=
 https://stream1.freetv.fun/8483b24bf58895eb31069caffd4b7f60cd2f49f6be2825507262480da78bd7c3.m3u8
 
 #EXTINF:-1 tvg-name="成都新闻综合" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu1.png" group-title="四川频道",成都新闻综合
-https://cdn1.cditv.cn/cdtv1high/CDTV1High.flv/playlist.m3u8?wsSecret=92352acf0240ca4c322cc50f3fc2a0f5&wsTime=697bd1e7
+https://cdn1.cditv.cn/cdtv1high/CDTV1High.flv/playlist.m3u8?wsSecret=87ccf43461ff3aa3ad8aa25f04e6573a&wsTime=697be029
 #EXTINF:-1 tvg-name="成都经济资讯" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu2.png" group-title="四川频道",成都经济资讯
-https://cdn1.cditv.cn/cdtv2high/CDTV2High.flv/playlist.m3u8?wsSecret=18fdc3ce4316b27063e942b1d7dcf605&wsTime=697bd1e8
+https://cdn1.cditv.cn/cdtv2high/CDTV2High.flv/playlist.m3u8?wsSecret=14c01db6ad91d50771e2218d5aa430b2&wsTime=697be029
 #EXTINF:-1 tvg-name="成都都市生活" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu3.png" group-title="四川频道",成都都市生活
-https://cdn1.cditv.cn/cdtv3high/CDTV3High.flv/playlist.m3u8?wsSecret=908031a9f8ca1b4b1e6a46ce3d8daa08&wsTime=697bd1e8
+https://cdn1.cditv.cn/cdtv3high/CDTV3High.flv/playlist.m3u8?wsSecret=3c33ea903fd4ef1d670da83b9be88afc&wsTime=697be02a
 #EXTINF:-1 tvg-name="成都影视文艺" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu4.png" group-title="四川频道",成都影视文艺
-https://cdn1.cditv.cn/cdtv4high/CDTV4High.flv/playlist.m3u8?wsSecret=13ab56c2639674be66ff084d47139e1b&wsTime=697bd1e9
+https://cdn1.cditv.cn/cdtv4high/CDTV4High.flv/playlist.m3u8?wsSecret=1b672b387143b95ab93b394d40b5765b&wsTime=697be02b
 #EXTINF:-1 tvg-name="成都公共" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu5.png" group-title="四川频道",成都公共
-https://cdn1.cditv.cn/cdtv5high/CDTV5High.flv/playlist.m3u8?wsSecret=220ab504f4910701f51b8eb10293a640&wsTime=697bd1e9
+https://cdn1.cditv.cn/cdtv5high/CDTV5High.flv/playlist.m3u8?wsSecret=9ba2ac2ed69cf72feaeef03c63d6fbd1&wsTime=697be02c
 #EXTINF:-1 tvg-name="成都少儿" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Chengdu6.png" group-title="四川频道",成都少儿
-https://cdn1.cditv.cn/cdtv6high/CDTV6High.flv/playlist.m3u8?wsSecret=8dc00e91de6e338f36320c2d3facc6b4&wsTime=697bd1ea
+https://cdn1.cditv.cn/cdtv6high/CDTV6High.flv/playlist.m3u8?wsSecret=315eaf3c9cd4171ee2caa92d6b1be3cc&wsTime=697be02d
 #EXTINF:-1 tvg-name=",四川南充综合" tvg-logo="https://gitee.com/suxuang/TVlogo/raw/main/img/Sichuan5.png" group-title="四川频道",四川南充综合
 https://stream1.freetv.fun/7bbd8543ec8061830ae82f130b4f66608a95b2400ba5fe2ae0a6c1be1e5f849a.m3u8
 
